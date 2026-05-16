@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Party Hire – Availability</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #f9a8d4; --pink-deep: #db2777; --pink-soft: #fdf2f8;
+    --text: #1e1b2e; --muted: #6b6880; --border: #e8e0f0; --white: #ffffff;
+    --avail: #16a34a; --part: #d97706; --full: #dc2626;
+    --avail-bg: #f0fdf4; --part-bg: #fffbeb; --full-bg: #fef2f2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--pink-soft); color: var(--text); min-height: 100vh; }
+
+  .hero { background: var(--white); border-bottom: 1px solid var(--border); padding: 2rem 1.5rem 1.5rem; text-align: center; }
+  .hero-balloons { font-size: 2rem; letter-spacing: 4px; margin-bottom: .5rem; }
+  .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem,5vw,2.8rem); font-weight: 600; margin-bottom: .4rem; }
+  .hero h1 span { color: var(--pink-deep); }
+  .hero p { font-size: 1rem; color: var(--muted); font-weight: 300; max-width: 480px; margin: 0 auto 1.25rem; line-height: 1.6; }
+  .messenger-btn { display: inline-flex; align-items: center; gap: 8px; background: #0084ff; color: white; text-decoration: none; padding: .65rem 1.4rem; border-radius: 50px; font-size: .95rem; font-weight: 500; transition: opacity .15s; }
+  .messenger-btn:hover { opacity: .88; }
+  .messenger-btn svg { width: 20px; height: 20px; fill: white; }
+
+  .stock-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 1rem; background: var(--white); border-bottom: 1px solid var(--border); }
+  .stock-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 50px; font-size: .8rem; font-weight: 500; border: 1px solid var(--border); background: var(--white); }
+  .dot-pill { width: 9px; height: 9px; border-radius: 50%; }
+
+  .main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+  .cal-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .cal-month { font-family: 'Playfair Display', serif; font-size: 1.2rem; }
+  .cal-arrows { display: flex; gap: 6px; }
+  .cal-arrows button { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); cursor: pointer; font-size: 1.1rem; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+  .cal-arrows button:hover { background: var(--pink-soft); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+  .dow { text-align: center; font-size: .72rem; font-weight: 500; color: var(--muted); padding: 8px 0; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--border); }
+  .cal-day { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 6px 8px; min-height: 72px; cursor: pointer; transition: background .12s; }
+  .cal-day:nth-child(7n) { border-right: none; }
+  .cal-day.empty { background: #faf8fc; cursor: default; }
+  .cal-day.past { opacity: .38; cursor: default; pointer-events: none; }
+  .cal-day.today .day-num { color: var(--pink-deep); font-weight: 500; }
+  .cal-day.selected { background: #fdf2f8; outline: 2px solid var(--pink-deep); outline-offset: -2px; }
+  .cal-day:not(.empty):not(.past):hover { background: #fdf2f8; }
+  .day-num { font-size: .8rem; color: var(--muted); margin-bottom: 5px; }
+  .day-bars { display: flex; flex-direction: column; gap: 2px; }
+  .d-bar { height: 4px; border-radius: 2px; width: 100%; }
+  .leg { display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 1.25rem; border-top: 1px solid var(--border); background: #faf8fc; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: .75rem; color: var(--muted); }
+  .leg-sq { width: 12px; height: 4px; border-radius: 2px; }
+
+  .detail-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; animation: fadeIn .2s ease; margin-bottom: 1.5rem; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .detail-head { padding: 1rem 1.25rem .75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .detail-head h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+  .detail-head p { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+  .item-section { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .item-section:last-child { border-bottom: none; }
+  .section-title { font-size: .7rem; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+  .item-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .item-row:last-child { margin-bottom: 0; }
+  .item-name { font-size: .88rem; display: flex; align-items: center; gap: 7px; }
+  .chair-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .item-bar-wrap { width: 100px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .item-bar { height: 100%; border-radius: 3px; transition: width .3s; }
+  .item-count { font-size: .82rem; font-weight: 500; min-width: 70px; text-align: right; }
+  .status-badge { display: inline-block; font-size: .72rem; font-weight: 500; padding: 3px 10px; border-radius: 50px; }
+
+  .cta-section { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .cta-section p { font-size: .9rem; color: var(--muted); }
+  .cta-section strong { display: block; font-size: 1rem; font-weight: 500; }
+
+  .admin-trigger { text-align: center; padding: 1.5rem 0 .5rem; }
+  .admin-trigger button { background: none; border: none; cursor: pointer; font-size: .75rem; color: #ccc; }
+  .admin-trigger button:hover { color: var(--muted); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 460px; overflow: hidden; animation: fadeIn .2s ease; max-height: 90vh; overflow-y: auto; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .modal-head h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+  .modal-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--muted); line-height: 1; }
+  .modal-body { padding: 1.25rem; }
+
+  label { display: block; font-size: .82rem; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+  input[type=password], input[type=date], input[type=number] { width: 100%; padding: .6rem .9rem; border: 1px solid var(--border); border-radius: 8px; font-size: .92rem; font-family: inherit; color: var(--text); background: var(--white); outline: none; }
+  input:focus { border-color: var(--pink-deep); box-shadow: 0 0 0 3px #fdf2f8; }
+  .field { margin-bottom: 1rem; }
+  .btn-primary { width: 100%; padding: .7rem; background: var(--pink-deep); color: white; border: none; border-radius: 8px; font-size: .95rem; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-secondary { width: 100%; padding: .65rem; background: var(--white); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: .9rem; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 8px; }
+  .btn-secondary:hover { background: var(--pink-soft); }
+  .error-msg { color: var(--full); font-size: .82rem; margin-top: 6px; }
+
+  .slider-row { display: grid; grid-template-columns: 1fr 80px; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .slider-label { font-size: .85rem; display: flex; align-items: center; gap: 7px; }
+  .stock-hint { font-size: .72rem; color: var(--muted); margin-bottom: 10px; }
+  .remaining.ok   { color: var(--avail); font-weight: 500; }
+  .remaining.low  { color: var(--part);  font-weight: 500; }
+  .remaining.none { color: var(--full);  font-weight: 500; }
+  .section-divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  .setup-note { font-size: .82rem; color: var(--muted); line-height: 1.7; margin-bottom: 1rem; padding: .75rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; }
+  .setup-note code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: .8rem; }
+  .setup-note a { color: var(--pink-deep); }
+
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #1e1b2e; color: white; padding: .65rem 1.25rem; border-radius: 50px; font-size: .88rem; z-index: 200; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  .booking-item { display: flex; align-items: flex-start; justify-content: space-between; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; font-size: .85rem; gap: 8px; }
+  .booking-item button { background: none; border: none; color: var(--full); cursor: pointer; font-size: .8rem; padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+  .booking-item button:hover { background: var(--full-bg); }
+  .no-bookings { font-size: .85rem; color: var(--muted); text-align: center; padding: 1.5rem 0; }
+
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top: 2px solid white; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 540px) {
+    .cal-day { min-height: 54px; padding: 4px; }
+    .day-num { font-size: .7rem; }
+    .item-bar-wrap { width: 60px; }
+    .item-count { min-width: 55px; font-size: .78rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════╗
+     ║  CONFIGURATION — fill in after JSONBin setup ║
+     ╚══════════════════════════════════════════════╝ -->
+<script>
+const CONFIG = {
+  JSONBIN_BIN_ID:  '6a080f14adc21f119aaa1821',   // e.g. '6654a1bcacd3cb34a836543e'
+  JSONBIN_API_KEY: '$2a$10$.cy2HfwCTYCFRPVNEx4aMu3p0gWeECOxu0exJFx/NhG8zBiywfR8O',   // e.g. '$2a$10$abcdef...'
+  ADMIN_PASSWORD:  'M#%C^!w9$$%%uJH83*0G',  // choose any password, e.g. 'hire2026'
+};
+</script>
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="hero">
+  <div class="hero-balloons">🎈 🎀 🎉</div>
+  <h1>Party Hire <span>Availability</span></h1>
+  <p>Check what's free on your event date, then message me to book.</p>
+  <a class="messenger-btn" href="https://m.me/sam.john.354715" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.259c0 2.862 1.386 5.423 3.56 7.11V22l3.338-1.834A10.66 10.66 0 0012 20.517c5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.007 12.482L10.59 12l-4.84 2.606 5.322-5.648 2.418 2.482 4.839-2.606-5.322 5.648z"/></svg>
+    Message me on Messenger
+  </a>
+</div>
+
+<div class="stock-bar">
+  <div class="stock-pill"><div class="dot-pill" style="background:#9ca3af"></div>Adult chairs × 15</div>
+  <div class="stock-pill"><div class="dot-pill" style="background:#f9a8d4"></div>Kids pink × 18</div>
+  <div class="stock-pill"><div class="dot-pill" style="background:#93c5fd"></div>Kids blue × 5</div>
+  <div class="stock-pill"><div class="dot-pill" style="background:#86efac"></div>Kids green × 5</div>
+  <div class="stock-pill"><div class="dot-pill" style="background:#fde68a"></div>Kids yellow × 5</div>
+  <div class="stock-pill"><div class="dot-pill" style="background:#c4b5fd"></div>6ft tables × 3</div>
+  <div class="stock-pill"><div class="dot-pill" style="background:#a5b4fc"></div>4ft tables × 3</div>
+</div>
+
+<div class="main">
+  <div id="loading-state" style="text-align:center;padding:3rem 0;color:var(--muted);font-size:.9rem;">
+    <div style="display:inline-block;width:22px;height:22px;border:2px solid var(--border);border-top:2px solid var(--pink-deep);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px;"></div>
+    Loading availability…
+  </div>
+
+  <div id="cal-wrap" style="display:none;">
+    <div class="cal-card">
+      <div class="cal-head">
+        <div class="cal-month" id="month-label"></div>
+        <div class="cal-arrows">
+          <button onclick="changeMonth(-1)">&#8249;</button>
+          <button onclick="changeMonth(1)">&#8250;</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid">
+        <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div>
+        <div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+      </div>
+      <div class="leg">
+        <div class="leg-item"><div class="leg-sq" style="background:var(--avail)"></div>Available</div>
+        <div class="leg-item"><div class="leg-sq" style="background:var(--part)"></div>Partially booked</div>
+        <div class="leg-item"><div class="leg-sq" style="background:var(--full)"></div>Fully booked</div>
+      </div>
+    </div>
+
+    <div id="detail-card" class="detail-card" style="display:none;"></div>
+
+    <div class="cta-section">
+      <div>
+        <strong>Ready to book?</strong>
+        <p>Message me on Messenger and I'll confirm your date.</p>
+      </div>
+      <a class="messenger-btn" href="https://m.me/sam.john.354715" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.259c0 2.862 1.386 5.423 3.56 7.11V22l3.338-1.834A10.66 10.66 0 0012 20.517c5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.007 12.482L10.59 12l-4.84 2.606 5.322-5.648 2.418 2.482 4.839-2.606-5.322 5.648z"/></svg>
+        Open Messenger
+      </a>
+    </div>
+  </div>
+
+  <div class="admin-trigger">
+    <button onclick="openLogin()">🔒 admin</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Admin Login</h3><button class="modal-close" onclick="closeModal('login-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="pw-input" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')checkLogin()">
+        <div class="error-msg" id="pw-error" style="display:none">Incorrect password.</div>
+      </div>
+      <button class="btn-primary" onclick="checkLogin()">Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP GUIDE -->
+<div class="modal-overlay" id="setup-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>⚙️ First-Time Setup</h3><button class="modal-close" onclick="closeModal('setup-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="setup-note">
+        You need to add your JSONBin details to the HTML file. Here's how:<br><br>
+        <strong>1.</strong> Go to <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> → Sign up free<br>
+        <strong>2.</strong> Click <strong>CREATE BIN</strong> → paste <code>{}</code> → Save → copy the <strong>BIN ID</strong><br>
+        <strong>3.</strong> Go to <strong>Account → API Keys</strong> → Create key → copy it<br>
+        <strong>4.</strong> Open your HTML file in Notepad and fill in the 3 values at the top:<br>
+        &nbsp;&nbsp;<code>JSONBIN_BIN_ID</code>, <code>JSONBIN_API_KEY</code>, <code>ADMIN_PASSWORD</code><br>
+        <strong>5.</strong> Re-upload to GitHub — done! 🎉
+      </div>
+      <button class="btn-secondary" onclick="closeModal('setup-modal')" style="margin-top:0">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>📅 Manage Bookings</h3><button class="modal-close" onclick="closeModal('admin-modal')">×</button></div>
+    <div class="modal-body">
+
+      <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+        <button class="btn-secondary" id="tab-add-btn"  onclick="showTab('add')"  style="margin:0;flex:1;font-weight:600">+ Add / Edit</button>
+        <button class="btn-secondary" id="tab-list-btn" onclick="showTab('list')" style="margin:0;flex:1">📋 All Bookings</button>
+      </div>
+
+      <!-- ADD TAB -->
+      <div id="tab-add">
+        <div class="field">
+          <label>Event Date</label>
+          <input type="date" id="booking-date" onchange="prefillExisting()">
+        </div>
+
+        <div class="section-title" style="margin-bottom:10px;">Adult seating</div>
+        <div class="slider-row">
+          <div class="slider-label"><div class="chair-dot" style="background:#9ca3af"></div>Adult chairs</div>
+          <input type="number" id="q-adult" min="0" max="15" value="0" oninput="updateRemaining()">
+        </div>
+        <div class="stock-hint">of 15 — <span id="r-adult" class="remaining ok">15 remaining</span></div>
+
+        <hr class="section-divider">
+        <div class="section-title" style="margin-bottom:10px;">Kids chairs</div>
+
+        <div class="slider-row">
+          <div class="slider-label"><div class="chair-dot" style="background:#f9a8d4"></div>Pink</div>
+          <input type="number" id="q-pink" min="0" max="18" value="0" oninput="updateRemaining()">
+        </div>
+        <div class="stock-hint">of 18 — <span id="r-pink" class="remaining ok">18 remaining</span></div>
+
+        <div class="slider-row" style="margin-top:8px;">
+          <div class="slider-label"><div class="chair-dot" style="background:#93c5fd"></div>Blue</div>
+          <input type="number" id="q-blue" min="0" max="5" value="0" oninput="updateRemaining()">
+        </div>
+        <div class="stock-hint">of 5 — <span id="r-blue" class="remaining ok">5 remaining</span></div>
+
+        <div class="slider-row" style="margin-top:8px;">
+          <div class="slider-label"><div class="chair-dot" style="background:#86efac"></div>Green</div>
+          <input type="number" id="q-green" min="0" max="5" value="0" oninput="updateRemaining()">
+        </div>
+        <div class="stock-hint">of 5 — <span id="r-green" class="remaining ok">5 remaining</span></div>
+
+        <div class="slider-row" style="margin-top:8px;">
+          <div class="slider-label"><div class="chair-dot" style="background:#fde68a"></div>Yellow</div>
+          <input type="number" id="q-yellow" min="0" max="5" value="0" oninput="updateRemaining()">
+        </div>
+        <div class="stock-hint">of 5 — <span id="r-yellow" class="remaining ok">5 remaining</span></div>
+
+        <hr class="section-divider">
+        <div class="section-title" style="margin-bottom:10px;">Tables</div>
+
+        <div class="slider-row">
+          <div class="slider-label"><div class="chair-dot" style="background:#c4b5fd"></div>6ft Bi-fold</div>
+          <input type="number" id="q-table6ft" min="0" max="3" value="0" oninput="updateRemaining()">
+        </div>
+        <div class="stock-hint">of 3 — <span id="r-table6ft" class="remaining ok">3 remaining</span></div>
+
+        <div class="slider-row" style="margin-top:8px;">
+          <div class="slider-label"><div class="chair-dot" style="background:#a5b4fc"></div>4ft Bi-fold</div>
+          <input type="number" id="q-table4ft" min="0" max="3" value="0" oninput="updateRemaining()">
+        </div>
+        <div class="stock-hint">of 3 — <span id="r-table4ft" class="remaining ok">3 remaining</span></div>
+
+        <div class="error-msg" id="save-error" style="display:none;margin:8px 0;"></div>
+        <button class="btn-primary" id="save-btn" onclick="saveBooking()" style="margin-top:1rem;">Save Booking</button>
+      </div>
+
+      <!-- LIST TAB -->
+      <div id="tab-list" style="display:none;">
+        <div id="booking-list-content"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Stock ── */
+const STOCK = {
+  adult:    { label:'Adult chairs',        total:15, color:'#9ca3af' },
+  pink:     { label:'Kids pink chairs',    total:18, color:'#f9a8d4' },
+  blue:     { label:'Kids blue chairs',    total:5,  color:'#93c5fd' },
+  green:    { label:'Kids green chairs',   total:5,  color:'#86efac' },
+  yellow:   { label:'Kids yellow chairs',  total:5,  color:'#fde68a' },
+  table6ft: { label:'6ft Bi-fold tables',  total:3,  color:'#c4b5fd' },
+  table4ft: { label:'4ft Bi-fold tables',  total:3,  color:'#a5b4fc' },
+};
+const KIDS_TOTAL  = 18+5+5+5;
+const TABLE_TOTAL = 3+3;
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SMONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const TODAY = new Date();
+let curYear = TODAY.getFullYear(), curMonth = TODAY.getMonth(), selectedDay = null;
+let BOOKINGS = {};
+
+/* ── JSONBin ── */
+const binUrl  = () => `https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_BIN_ID}`;
+const headers = () => ({ 'Content-Type':'application/json','X-Master-Key':CONFIG.JSONBIN_API_KEY,'X-Bin-Meta':'false' });
+const isConfigured = () =>
+  CONFIG.JSONBIN_BIN_ID  !== 'PASTE_YOUR_BIN_ID_HERE' &&
+  CONFIG.JSONBIN_API_KEY !== 'PASTE_YOUR_API_KEY_HERE' &&
+  CONFIG.ADMIN_PASSWORD  !== 'PASTE_YOUR_PASSWORD_HERE';
+
+async function loadBookings() {
+  if (!isConfigured()) { showCal(); return; }
+  try {
+    const r = await fetch(binUrl(), { headers: headers() });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    BOOKINGS = (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+  } catch { BOOKINGS = {}; }
+  showCal();
+}
+async function pushBookings() {
+  const r = await fetch(binUrl(), { method:'PUT', headers:headers(), body:JSON.stringify(BOOKINGS) });
+  if (!r.ok) throw new Error('save failed');
+}
+function showCal() {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('cal-wrap').style.display = 'block';
+  renderCal();
+}
+
+/* ── Key: "YYYY-M-D" (0-indexed month matches JS Date) ── */
+function dateKey(y, m, d) { return `${y}-${m}-${d}`; }
+function getAvail(y, m, d) {
+  const b = BOOKINGS[dateKey(y,m,d)] || {};
+  const o = {};
+  for (const k in STOCK) o[k] = STOCK[k].total - (b[k]||0);
+  return o;
+}
+function barColor(a,t) { return a===0?'var(--full)':a<t?'var(--part)':'var(--avail)'; }
+
+/* ── Calendar ── */
+function renderCal() {
+  document.getElementById('month-label').textContent = `${MONTHS[curMonth]} ${curYear}`;
+  const grid = document.getElementById('cal-grid');
+  grid.querySelectorAll('.cal-day').forEach(e=>e.remove());
+  const first = new Date(curYear,curMonth,1).getDay();
+  const days  = new Date(curYear,curMonth+1,0).getDate();
+  const todayDate = new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate());
+
+  for(let i=0;i<first;i++){ const e=document.createElement('div'); e.className='cal-day empty'; grid.appendChild(e); }
+
+  for(let d=1;d<=days;d++){
+    const el = document.createElement('div'); el.className='cal-day';
+    const dt = new Date(curYear,curMonth,d);
+    const isPast = dt < todayDate;
+    const isToday = dt.getTime()===todayDate.getTime();
+    if(isPast) el.classList.add('past');
+    if(isToday) el.classList.add('today');
+    if(selectedDay===d) el.classList.add('selected');
+
+    if(!isPast){
+      const av = getAvail(curYear,curMonth,d);
+      const ra = av.adult/15;
+      const rk = (av.pink+av.blue+av.green+av.yellow)/KIDS_TOTAL;
+      const rt = (av.table6ft+av.table4ft)/TABLE_TOTAL;
+      const c = r => r===0?'var(--full)':r<1?'var(--part)':'var(--avail)';
+      el.innerHTML = `<div class="day-num">${d}</div><div class="day-bars">
+        <div class="d-bar" style="background:${c(ra)}"></div>
+        <div class="d-bar" style="background:${c(rk)}"></div>
+        <div class="d-bar" style="background:${c(rt)}"></div>
+      </div>`;
+      el.addEventListener('click',()=>{ selectedDay=d; renderCal(); showDetail(d); });
+    } else {
+      el.innerHTML = `<div class="day-num">${d}</div>`;
+    }
+    grid.appendChild(el);
+  }
+}
+
+function changeMonth(dir){
+  curMonth+=dir;
+  if(curMonth>11){curMonth=0;curYear++;}
+  if(curMonth<0){curMonth=11;curYear--;}
+  selectedDay=null;
+  document.getElementById('detail-card').style.display='none';
+  renderCal();
+}
+
+/* ── Detail ── */
+function showDetail(d){
+  const av=getAvail(curYear,curMonth,d), panel=document.getElementById('detail-card');
+  const ks=Object.keys(STOCK);
+  const allFull=ks.every(k=>av[k]===0), allFree=ks.every(k=>av[k]===STOCK[k].total);
+  const badge = allFull
+    ?`<span class="status-badge" style="background:var(--full-bg);color:var(--full)">All items booked</span>`
+    :allFree
+    ?`<span class="status-badge" style="background:var(--avail-bg);color:var(--avail)">All available</span>`
+    :`<span class="status-badge" style="background:var(--part-bg);color:var(--part)">Partially available</span>`;
+
+  const row=k=>{
+    const s=STOCK[k],a=av[k],pct=Math.round(a/s.total*100),bc=barColor(a,s.total);
+    const tc=a===0?'var(--full)':a<s.total?'var(--part)':'var(--avail)';
+    return `<div class="item-row">
+      <div class="item-name"><div class="chair-dot" style="background:${s.color}"></div>${s.label}</div>
+      <div class="item-bar-wrap"><div class="item-bar" style="width:${pct}%;background:${bc}"></div></div>
+      <div class="item-count" style="color:${tc}">${a} / ${s.total}</div>
+    </div>`;
+  };
+
+  panel.innerHTML=`
+    <div class="detail-head">
+      <div><h2>${d} ${SMONTHS[curMonth]} ${curYear}</h2><p>Items available on this date</p></div>
+      <div style="margin-left:auto">${badge}</div>
+    </div>
+    <div class="item-section"><div class="section-title">Adult seating</div>${row('adult')}</div>
+    <div class="item-section"><div class="section-title">Kids chairs</div>${row('pink')}${row('blue')}${row('green')}${row('yellow')}</div>
+    <div class="item-section"><div class="section-title">Tables</div>${row('table6ft')}${row('table4ft')}</div>
+    <div style="padding:1rem 1.25rem;background:#fdf2f8;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <p style="font-size:.88rem;color:var(--muted)">Interested in this date?</p>
+      <a class="messenger-btn" href="https://m.me/sam.john.354715?text=Hi! I'd like to hire items for ${d} ${SMONTHS[curMonth]} ${curYear}." target="_blank" rel="noopener" style="font-size:.85rem;padding:.5rem 1.1rem;">
+        <svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:white"><path d="M12 2C6.477 2 2 6.145 2 11.259c0 2.862 1.386 5.423 3.56 7.11V22l3.338-1.834A10.66 10.66 0 0012 20.517c5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.007 12.482L10.59 12l-4.84 2.606 5.322-5.648 2.418 2.482 4.839-2.606-5.322 5.648z"/></svg>
+        Book this date
+      </a>
+    </div>`;
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ── Admin login ── */
+function openLogin(){
+  if(!isConfigured()){ openModal('setup-modal'); return; }
+  openModal('login-modal');
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
+function checkLogin(){
+  if(document.getElementById('pw-input').value===CONFIG.ADMIN_PASSWORD){
+    closeModal('login-modal');
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-error').style.display='none';
+    openAdmin();
+  } else {
+    document.getElementById('pw-error').style.display='block';
+    document.getElementById('pw-input').select();
+  }
+}
+
+/* ── Admin panel ── */
+function openAdmin(){
+  showTab('add');
+  const t=new Date();
+  document.getElementById('booking-date').value=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  resetForm(); prefillExisting();
+  openModal('admin-modal');
+}
+
+function showTab(tab){
+  document.getElementById('tab-add').style.display  = tab==='add'  ?'block':'none';
+  document.getElementById('tab-list').style.display = tab==='list' ?'block':'none';
+  document.getElementById('tab-add-btn').style.fontWeight  = tab==='add'  ?'600':'400';
+  document.getElementById('tab-list-btn').style.fontWeight = tab==='list' ?'600':'400';
+  if(tab==='list') renderBookingList();
+}
+
+function resetForm(){
+  ['adult','pink','blue','green','yellow','table6ft','table4ft'].forEach(k=>{
+    const el=document.getElementById(`q-${k}`); if(el) el.value=0;
+  });
+  updateRemaining();
+  document.getElementById('save-error').style.display='none';
+}
+
+/* Pre-fill quantities if this date already has a booking */
+function prefillExisting(){
+  const dv=document.getElementById('booking-date').value;
+  if(!dv) return;
+  const [y,m,d]=dv.split('-').map(Number);
+  const k=dateKey(y,m-1,d);
+  const b=BOOKINGS[k]||{};
+  ['adult','pink','blue','green','yellow','table6ft','table4ft'].forEach(ik=>{
+    const el=document.getElementById(`q-${ik}`); if(el) el.value=b[ik]||0;
+  });
+  updateRemaining();
+}
+
+function updateRemaining(){
+  const cfg={adult:15,pink:18,blue:5,green:5,yellow:5,table6ft:3,table4ft:3};
+  for(const[k,total] of Object.entries(cfg)){
+    const booked=parseInt(document.getElementById(`q-${k}`)?.value)||0;
+    const rem=total-booked;
+    const el=document.getElementById(`r-${k}`);
+    if(!el) continue;
+    el.textContent=`${rem} remaining`;
+    el.className='remaining '+(rem===0?'none':rem<=Math.ceil(total*.3)?'low':'ok');
+  }
+}
+
+async function saveBooking(){
+  const dv=document.getElementById('booking-date').value;
+  if(!dv){ showSaveError('Please select a date.'); return; }
+  const [y,m,d]=dv.split('-').map(Number);
+  const k=dateKey(y,m-1,d);
+  const cfg={adult:15,pink:18,blue:5,green:5,yellow:5,table6ft:3,table4ft:3};
+  const entry={};
+  for(const ik of Object.keys(cfg)){
+    const v=parseInt(document.getElementById(`q-${ik}`).value)||0;
+    if(v>cfg[ik]){ showSaveError(`${STOCK[ik].label}: exceeds stock of ${cfg[ik]}.`); return; }
+    entry[ik]=v;
+  }
+  const btn=document.getElementById('save-btn');
+  btn.innerHTML='<span class="spinner"></span>Saving…'; btn.disabled=true;
+  try {
+    BOOKINGS={...BOOKINGS,[k]:entry};
+    await pushBookings();
+    showToast('✅ Booking saved!');
+    closeModal('admin-modal');
+    renderCal();
+    if(selectedDay) showDetail(selectedDay);
+  } catch {
+    delete BOOKINGS[k];
+    showSaveError('Could not save — check your internet connection.');
+  } finally {
+    btn.innerHTML='Save Booking'; btn.disabled=false;
+  }
+}
+
+function renderBookingList(){
+  const c=document.getElementById('booking-list-content');
+  const keys=Object.keys(BOOKINGS).sort();
+  if(!keys.length){ c.innerHTML='<p class="no-bookings">No bookings yet.</p>'; return; }
+  c.innerHTML=keys.map(k=>{
+    const[y,m,d]=k.split('-').map(Number);
+    const ds=`${d} ${SMONTHS[m]} ${y}`;
+    const b=BOOKINGS[k];
+    const summary=Object.entries(b).filter(([,v])=>v>0).map(([ik,v])=>`${v} ${STOCK[ik]?.label||ik}`).join(', ')||'Nothing booked';
+    return `<div class="booking-item">
+      <div><strong style="font-size:.88rem">${ds}</strong><br><span style="font-size:.78rem;color:var(--muted)">${summary}</span></div>
+      <button onclick="deleteBooking('${k}')">✕ Remove</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteBooking(k){
+  if(!confirm('Remove this booking?')) return;
+  const backup={...BOOKINGS};
+  delete BOOKINGS[k];
+  try {
+    await pushBookings();
+    showToast('Booking removed.');
+    renderBookingList(); renderCal();
+    if(selectedDay) showDetail(selectedDay);
+  } catch {
+    BOOKINGS=backup;
+    showToast('Could not delete — try again.');
+  }
+}
+
+/* ── Modals ── */
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }));
+
+function showSaveError(msg){ const e=document.getElementById('save-error'); e.textContent=msg; e.style.display='block'; }
+
+/* ── Toast ── */
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ── Boot ── */
+loadBookings();
+</script>
+</body>
+</html>
