@@ -345,8 +345,8 @@ let BOOKINGS = {};
 const binUrl  = () => `https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_BIN_ID}`;
 const headers = () => ({
   'Content-Type':    'application/json',
+  
   'X-Master-Key':    CONFIG.JSONBIN_API_KEY,
-  'X-Access-Key':    CONFIG.JSONBIN_API_KEY,
   'X-Bin-Meta':      'false',
   'X-Bin-Versioning':'false',
 });
