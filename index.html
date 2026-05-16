@@ -343,7 +343,13 @@ let BOOKINGS = {};
 
 /* ── JSONBin ── */
 const binUrl  = () => `https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_BIN_ID}`;
-const headers = () => ({ 'Content-Type':'application/json','X-Master-Key':CONFIG.JSONBIN_API_KEY,'X-Bin-Meta':'false' });
+const headers = () => ({
+  'Content-Type':    'application/json',
+  'X-Master-Key':    CONFIG.JSONBIN_API_KEY,
+  'X-Access-Key':    CONFIG.JSONBIN_API_KEY,
+  'X-Bin-Meta':      'false',
+  'X-Bin-Versioning':'false',
+});
 const isConfigured = () =>
   CONFIG.JSONBIN_BIN_ID  !== 'PASTE_YOUR_BIN_ID_HERE' &&
   CONFIG.JSONBIN_API_KEY !== 'PASTE_YOUR_API_KEY_HERE' &&
@@ -353,15 +359,21 @@ async function loadBookings() {
   if (!isConfigured()) { showCal(); return; }
   try {
     const r = await fetch(binUrl(), { headers: headers() });
-    if (!r.ok) throw new Error();
-    const data = await r.json();
-    BOOKINGS = (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
-  } catch { BOOKINGS = {}; }
+    if (!r.ok) { console.error('JSONBin load failed:', r.status, await r.text()); }
+    else {
+      const data = await r.json();
+      BOOKINGS = (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+    }
+  } catch(e) { console.error('JSONBin load error:', e); }
   showCal();
 }
 async function pushBookings() {
   const r = await fetch(binUrl(), { method:'PUT', headers:headers(), body:JSON.stringify(BOOKINGS) });
-  if (!r.ok) throw new Error('save failed');
+  if (!r.ok) {
+    const msg = await r.text();
+    console.error('JSONBin save failed:', r.status, msg);
+    throw new Error(`Save failed (${r.status}): ${msg}`);
+  }
 }
 function showCal() {
   document.getElementById('loading-state').style.display = 'none';
@@ -556,9 +568,9 @@ async function saveBooking(){
     closeModal('admin-modal');
     renderCal();
     if(selectedDay) showDetail(selectedDay);
-  } catch {
+  } catch(e) {
     delete BOOKINGS[k];
-    showSaveError('Could not save — check your internet connection.');
+    showSaveError('Could not save — ' + (e.message || 'check your API key and internet connection.'));
   } finally {
     btn.innerHTML='Save Booking'; btn.disabled=false;
   }
@@ -589,9 +601,9 @@ async function deleteBooking(k){
     showToast('Booking removed.');
     renderBookingList(); renderCal();
     if(selectedDay) showDetail(selectedDay);
-  } catch {
+  } catch(e) {
     BOOKINGS=backup;
-    showToast('Could not delete — try again.');
+    showToast('Could not delete — ' + (e.message || 'try again.'));
   }
 }
 
