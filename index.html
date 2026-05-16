@@ -133,9 +133,9 @@
      ╚══════════════════════════════════════════════╝ -->
 <script>
 const CONFIG = {
-  JSONBIN_BIN_ID:  'PASTE_YOUR_BIN_ID_HERE',   // e.g. '6654a1bcacd3cb34a836543e'
-  JSONBIN_API_KEY: 'PASTE_YOUR_API_KEY_HERE',   // e.g. '$2a$10$abcdef...'
-  ADMIN_PASSWORD:  'PASTE_YOUR_PASSWORD_HERE',  // choose any password, e.g. 'hire2026'
+  JSONBIN_BIN_ID:  '6a0818af250b1311c35a5fb6',   // e.g. '6654a1bcacd3cb34a836543e'
+  JSONBIN_API_KEY: '$2a$10$ouva568bgjqxByYdYqLtpO3Y/0kwejoX0N1IwDJRVczGqowDnYX.u',   // e.g. '$2a$10$abcdef...'
+  ADMIN_PASSWORD:  'M#%C^!w9$$%%uJH83*0G',  // choose any password, e.g. 'hire2026'
 };
 </script>
 <!-- ════════════════════════════════════════════════ -->
@@ -345,15 +345,15 @@ let BOOKINGS = {};
 const binUrl  = () => `https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_BIN_ID}`;
 const headers = () => ({
   'Content-Type':    'application/json',
-  
   'X-Master-Key':    CONFIG.JSONBIN_API_KEY,
+  'X-Access-Key':    CONFIG.JSONBIN_API_KEY,
   'X-Bin-Meta':      'false',
   'X-Bin-Versioning':'false',
 });
 const isConfigured = () =>
-  CONFIG.JSONBIN_BIN_ID  !== '6a0818af250b1311c35a5fb6' &&
-  CONFIG.JSONBIN_API_KEY !== '$2a$10$9Yqi5FdE55BpLS4bwU1FY.dyFlCA4KN3srcxs3MmWXziPlSCOJw7y' &&
-  CONFIG.ADMIN_PASSWORD  !== 'M#%C^!w9$$%%uJH83*0G';
+  CONFIG.JSONBIN_BIN_ID  !== 'PASTE_YOUR_BIN_ID_HERE' &&
+  CONFIG.JSONBIN_API_KEY !== 'PASTE_YOUR_API_KEY_HERE' &&
+  CONFIG.ADMIN_PASSWORD  !== 'PASTE_YOUR_PASSWORD_HERE';
 
 async function loadBookings() {
   if (!isConfigured()) { showCal(); return; }
